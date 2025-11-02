@@ -2,7 +2,7 @@ trigger:
 - main
 
 pool:
-  name: 'Default'
+  name: 'Default'  # Change from 'Self-Hosted' to 'Default'
 
 stages:
 - stage: Infrastructure
@@ -16,6 +16,7 @@ stages:
         filePath: 'scripts/create-vms.sh'
 
 - stage: Kubernetes
+  dependsOn: Infrastructure  # Add dependency
   jobs:
   - job: SetupK8s
     steps:
@@ -24,3 +25,17 @@ stages:
       inputs:
         targetType: 'filePath'
         filePath: 'scripts/setup-k8s-v2.sh'
+
+- stage: Deploy
+  dependsOn: Kubernetes  # Add deployment stage
+  jobs:
+  - job: DeployApps
+    steps:
+    - task: Bash@3
+      displayName: 'Deploy Applications'
+      inputs:
+        targetType: 'inline'
+        script: |
+          kubectl apply -f k8s/nginx.yaml
+          kubectl get pods
+          kubectl get svc nginx-service
