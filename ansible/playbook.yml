@@ -88,8 +88,8 @@
       shell: kubeadm reset -f
       ignore_errors: yes
 
-    - name: Initialize Kubernetes cluster
-      shell: kubeadm init --pod-network-cidr=192.168.0.0/16 --apiserver-advertise-address=10.6.253.177
+    - name: Initialize Kubernetes cluster with dynamic IP
+      shell: kubeadm init --pod-network-cidr=192.168.0.0/16 --apiserver-advertise-address={{ ansible_default_ipv4.address }}
       register: kubeadm_output
 
     - name: Create .kube directory
