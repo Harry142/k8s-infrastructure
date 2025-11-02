@@ -85,12 +85,15 @@
   hosts: k8s_master
   become: yes
   tasks:
-    - name: Reset kubeadm
-      shell: kubeadm reset -f
+    - name: Reset kubeadm completely
+      shell: |
+        kubeadm reset -f
+        rm -rf /var/lib/etcd
+        rm -rf /etc/kubernetes/pki
       ignore_errors: yes
 
     - name: Initialize Kubernetes cluster with dynamic IP
-      shell: kubeadm init --pod-network-cidr=192.168.0.0/16 --apiserver-advertise-address={{ ansible_default_ipv4.address }}
+      shell: kubeadm init --pod-network-cidr={{ pod_network_cidr | default('192.168.0.0/16') }} --apiserver-advertise-address={{ ansible_default_ipv4.address }}
       register: kubeadm_output
 
     - name: Create .kube directory

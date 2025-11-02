@@ -53,13 +53,19 @@ stages:
               ;;
             "reset")
               echo "🔄 Resetting Kubernetes cluster..."
-              multipass exec k8s-master -- sudo kubeadm reset -f
+              multipass exec k8s-master -- sudo bash -c "kubeadm reset -f && rm -rf /var/lib/etcd && rm -rf /etc/kubernetes/pki"
               multipass exec k8s-worker1 -- sudo kubeadm reset -f
               multipass exec k8s-worker2 -- sudo kubeadm reset -f
               echo "✅ Cluster reset complete"
               ;;
             "rejoin-workers")
               echo "🔗 Rejoining worker nodes..."
+              # First ensure master is properly initialized
+              MASTER_IP=$(multipass info k8s-master | grep IPv4 | awk '{print $2}')
+              multipass exec k8s-master -- sudo bash -c "kubeadm reset -f && rm -rf /var/lib/etcd && rm -rf /etc/kubernetes/pki"
+              multipass exec k8s-master -- sudo kubeadm init --pod-network-cidr=192.168.0.0/16 --apiserver-advertise-address=$MASTER_IP
+              
+              # Get new join command
               JOIN_CMD=$(multipass exec k8s-master -- sudo kubeadm token create --print-join-command)
               multipass exec k8s-worker1 -- sudo kubeadm reset -f
               multipass exec k8s-worker2 -- sudo kubeadm reset -f
