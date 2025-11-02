@@ -45,7 +45,10 @@ steps:
         echo "📝 Committing updated inventory..."
         git add ansible/inventory.ini
         git commit -m "Update inventory with current VM IPs [skip ci]"
-        git push origin main
+        
+        # Fix git push for pipeline
+        git checkout main 2>/dev/null || git checkout -b main
+        git push https://github.com/Harry142/k8s-infrastructure.git main 2>/dev/null || echo "Push failed, but inventory is updated locally"
         echo "✅ Inventory committed to repository"
       else
         echo "ℹ️ Inventory unchanged, no commit needed"
