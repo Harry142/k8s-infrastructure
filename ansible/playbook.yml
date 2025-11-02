@@ -109,6 +109,7 @@
         dest: /home/ubuntu/.kube/config
         owner: ubuntu
         group: ubuntu
+        mode: '0644'
         remote_src: yes
 
     - name: Install Calico network plugin

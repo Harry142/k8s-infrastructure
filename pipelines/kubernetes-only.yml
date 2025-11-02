@@ -95,7 +95,11 @@ stages:
         targetType: 'inline'
         script: |
           # Setup kubectl
+          mkdir -p ~/.kube
           multipass exec k8s-master -- sudo cat /etc/kubernetes/admin.conf > ~/.kube/config
+          
+          # Also ensure kubectl is set up on master node
+          multipass exec k8s-master -- bash -c "mkdir -p /home/ubuntu/.kube && sudo cp /etc/kubernetes/admin.conf /home/ubuntu/.kube/config && sudo chown ubuntu:ubuntu /home/ubuntu/.kube/config"
           
           # Verify cluster
           echo "🔍 Cluster Status:"

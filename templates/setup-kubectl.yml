@@ -4,8 +4,12 @@ steps:
   inputs:
     targetType: 'inline'
     script: |
-      # Copy kubeconfig from master
+      # Setup kubectl on agent
+      mkdir -p ~/.kube
       multipass exec k8s-master -- sudo cat /etc/kubernetes/admin.conf > ~/.kube/config
+      
+      # Setup kubectl on master node
+      multipass exec k8s-master -- bash -c "mkdir -p /home/ubuntu/.kube && sudo cp /etc/kubernetes/admin.conf /home/ubuntu/.kube/config && sudo chown ubuntu:ubuntu /home/ubuntu/.kube/config"
       
       # Verify connection
       kubectl get nodes
