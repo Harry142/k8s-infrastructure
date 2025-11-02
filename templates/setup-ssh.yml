@@ -9,7 +9,10 @@ steps:
       # Generate SSH key if it doesn't exist
       if [ ! -f ~/.ssh/id_rsa ]; then
         echo "Generating SSH key..."
+        mkdir -p ~/.ssh
         ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ""
+        chmod 600 ~/.ssh/id_rsa
+        chmod 644 ~/.ssh/id_rsa.pub
       fi
       
       # Copy SSH key to all VMs
@@ -19,14 +22,15 @@ steps:
         # Get VM IP
         VM_IP=$(multipass info $vm | grep IPv4 | awk '{print $2}')
         
-        # Copy SSH key using multipass (which has access)
+        # Use multipass mount to copy the key (avoids permission issues)
         multipass exec $vm -- mkdir -p /home/ubuntu/.ssh
-        multipass transfer ~/.ssh/id_rsa.pub $vm:/tmp/id_rsa.pub
-        multipass exec $vm -- bash -c "cat /tmp/id_rsa.pub >> /home/ubuntu/.ssh/authorized_keys"
+        
+        # Copy key content directly via multipass exec
+        PUB_KEY=$(cat ~/.ssh/id_rsa.pub)
+        multipass exec $vm -- bash -c "echo '$PUB_KEY' >> /home/ubuntu/.ssh/authorized_keys"
         multipass exec $vm -- bash -c "chmod 600 /home/ubuntu/.ssh/authorized_keys"
         multipass exec $vm -- bash -c "chmod 700 /home/ubuntu/.ssh"
         multipass exec $vm -- bash -c "chown -R ubuntu:ubuntu /home/ubuntu/.ssh"
-        multipass exec $vm -- rm /tmp/id_rsa.pub
         
         echo "✅ SSH key setup complete for $vm ($VM_IP)"
       done
