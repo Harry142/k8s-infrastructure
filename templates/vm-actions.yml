@@ -30,6 +30,16 @@ steps:
           echo "💾 Host Resources:"
           free -h
           ;;
+        "stop")
+          echo "⏸️ Stopping all VMs..."
+          multipass stop --all
+          echo "✅ All VMs stopped"
+          ;;
+        "start")
+          echo "▶️ Starting all VMs..."
+          multipass start --all
+          echo "✅ All VMs started"
+          ;;
         *)
           echo "❌ Unknown action: ${{ parameters.action }}"
           exit 1
