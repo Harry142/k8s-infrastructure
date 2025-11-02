@@ -88,13 +88,16 @@ stages:
               ;;
           esac
     
-    - template: ../templates/setup-kubectl.yml
-    
     - task: Bash@3
-      displayName: 'Verify Cluster Status'
+      displayName: 'Setup kubectl and Verify (setup/rejoin only)'
+      condition: and(succeeded(), in(variables['action'], 'setup', 'rejoin-workers'))
       inputs:
         targetType: 'inline'
         script: |
+          # Setup kubectl
+          multipass exec k8s-master -- sudo cat /etc/kubernetes/admin.conf > ~/.kube/config
+          
+          # Verify cluster
           echo "🔍 Cluster Status:"
           kubectl get nodes -o wide
           kubectl get pods --all-namespaces
