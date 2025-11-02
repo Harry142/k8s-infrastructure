@@ -72,8 +72,8 @@ done
 
 # Create VMs
 create_vm "k8s-master" 2 "4G" "20G"
-create_vm "k8s-worker1" 2 "2G" "20G"
-create_vm "k8s-worker2" 2 "2G" "20G"
+create_vm "k8s-worker1" 2 "2G" "15G"
+create_vm "k8s-worker2" 2 "2G" "15G"
 
 echo -e "\n${GREEN}🎉 All VMs created successfully!${NC}"
 echo -e "${YELLOW}VM Status:${NC}"
