@@ -75,9 +75,18 @@ stages:
               ;;
             "status")
               echo "📊 Kubernetes Cluster Status..."
-              kubectl get nodes -o wide
-              kubectl get pods --all-namespaces
-              kubectl get svc --all-namespaces
+              
+              # Setup kubectl first
+              mkdir -p ~/.kube
+              if multipass exec k8s-master -- sudo cat /etc/kubernetes/admin.conf > ~/.kube/config 2>/dev/null; then
+                echo "✅ kubectl configured successfully"
+                kubectl get nodes -o wide
+                kubectl get pods --all-namespaces
+                kubectl get svc --all-namespaces
+              else
+                echo "❌ No Kubernetes cluster found or cluster not initialized"
+                echo "💡 Run 'setup' action first to initialize the cluster"
+              fi
               ;;
             "restart-services")
               echo "🔄 Restarting Kubernetes services..."
