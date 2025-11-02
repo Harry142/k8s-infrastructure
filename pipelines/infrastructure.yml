@@ -20,5 +20,6 @@ stages:
   - job: SetupK8s
     displayName: 'Configure Kubernetes'
     steps:
+    - template: ../templates/setup-ssh.yml
     - template: ../templates/generate-inventory.yml
     - template: ../templates/setup-kubernetes.yml

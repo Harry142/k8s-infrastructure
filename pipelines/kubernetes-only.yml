@@ -21,6 +21,7 @@ stages:
   - job: K8sAction
     displayName: 'Kubernetes ${{ parameters.action }}'
     steps:
+    - template: ../templates/setup-ssh.yml
     - template: ../templates/generate-inventory.yml
     
     - task: Bash@3

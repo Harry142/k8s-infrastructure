@@ -1,0 +1,43 @@
+steps:
+- task: Bash@3
+  displayName: 'Setup SSH Keys for VMs'
+  inputs:
+    targetType: 'inline'
+    script: |
+      echo "🔑 Setting up SSH keys for VM access..."
+      
+      # Generate SSH key if it doesn't exist
+      if [ ! -f ~/.ssh/id_rsa ]; then
+        echo "Generating SSH key..."
+        ssh-keygen -t rsa -b 4096 -f ~/.ssh/id_rsa -N ""
+      fi
+      
+      # Copy SSH key to all VMs
+      for vm in k8s-master k8s-worker1 k8s-worker2; do
+        echo "Setting up SSH key for $vm..."
+        
+        # Get VM IP
+        VM_IP=$(multipass info $vm | grep IPv4 | awk '{print $2}')
+        
+        # Copy SSH key using multipass (which has access)
+        multipass exec $vm -- mkdir -p /home/ubuntu/.ssh
+        multipass transfer ~/.ssh/id_rsa.pub $vm:/tmp/id_rsa.pub
+        multipass exec $vm -- bash -c "cat /tmp/id_rsa.pub >> /home/ubuntu/.ssh/authorized_keys"
+        multipass exec $vm -- bash -c "chmod 600 /home/ubuntu/.ssh/authorized_keys"
+        multipass exec $vm -- bash -c "chmod 700 /home/ubuntu/.ssh"
+        multipass exec $vm -- bash -c "chown -R ubuntu:ubuntu /home/ubuntu/.ssh"
+        multipass exec $vm -- rm /tmp/id_rsa.pub
+        
+        echo "✅ SSH key setup complete for $vm ($VM_IP)"
+      done
+      
+      # Test SSH connection
+      echo "🧪 Testing SSH connections..."
+      for vm in k8s-master k8s-worker1 k8s-worker2; do
+        VM_IP=$(multipass info $vm | grep IPv4 | awk '{print $2}')
+        if ssh -o StrictHostKeyChecking=no -o ConnectTimeout=5 ubuntu@$VM_IP "echo 'SSH test successful'" 2>/dev/null; then
+          echo "✅ SSH connection to $vm ($VM_IP) successful"
+        else
+          echo "❌ SSH connection to $vm ($VM_IP) failed"
+        fi
+      done
