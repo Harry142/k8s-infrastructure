@@ -28,6 +28,7 @@ stages:
     
     - task: Bash@3
       displayName: 'Kubernetes Action: ${{ parameters.action }}'
+      timeoutInMinutes: 30
       inputs:
         targetType: 'inline'
         script: |
