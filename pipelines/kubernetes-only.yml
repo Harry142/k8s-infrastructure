@@ -1,0 +1,86 @@
+name: Kubernetes Setup Only
+trigger: none  # Manual only
+
+pool:
+  name: 'Default'
+
+parameters:
+- name: action
+  displayName: 'Kubernetes Action'
+  type: string
+  default: 'setup'
+  values:
+  - setup
+  - reset
+  - rejoin-workers
+
+stages:
+- stage: KubernetesAction
+  displayName: 'Kubernetes Operations'
+  jobs:
+  - job: K8sAction
+    displayName: 'Kubernetes ${{ parameters.action }}'
+    steps:
+    - template: ../templates/generate-inventory.yml
+    
+    - task: Bash@3
+      displayName: 'Kubernetes Action: ${{ parameters.action }}'
+      inputs:
+        targetType: 'inline'
+        script: |
+          case "${{ parameters.action }}" in
+            "setup")
+              echo "🚀 Setting up Kubernetes cluster..."
+              
+              # Fix repository issues
+              sudo rm -f /etc/apt/sources.list.d/hashicorp.list
+              sudo rm -f /etc/apt/sources.list.d/mikhailnov-ubuntu-pulseeffects-jammy.list
+              sudo apt update 2>/dev/null || true
+              
+              # Install ansible
+              sudo apt install -y ansible || {
+                echo "Trying pip installation..."
+                sudo apt install -y python3-pip
+                pip3 install ansible
+                export PATH="$HOME/.local/bin:$PATH"
+              }
+              
+              ansible-playbook -i ansible/inventory.ini ansible/playbook.yml
+              ;;
+            "reset")
+              echo "🔄 Resetting Kubernetes cluster..."
+              multipass exec k8s-master -- sudo kubeadm reset -f
+              multipass exec k8s-worker1 -- sudo kubeadm reset -f
+              multipass exec k8s-worker2 -- sudo kubeadm reset -f
+              echo "✅ Cluster reset complete"
+              ;;
+            "rejoin-workers")
+              echo "🔗 Rejoining worker nodes..."
+              JOIN_CMD=$(multipass exec k8s-master -- sudo kubeadm token create --print-join-command)
+              multipass exec k8s-worker1 -- sudo kubeadm reset -f
+              multipass exec k8s-worker2 -- sudo kubeadm reset -f
+              multipass exec k8s-worker1 -- sudo $JOIN_CMD
+              multipass exec k8s-worker2 -- sudo $JOIN_CMD
+              echo "✅ Workers rejoined"
+              ;;
+          esac
+    
+    - template: ../templates/setup-kubectl.yml
+    
+    - task: Bash@3
+      displayName: 'Verify Cluster Status'
+      inputs:
+        targetType: 'inline'
+        script: |
+          echo "🔍 Cluster Status:"
+          kubectl get nodes -o wide
+          kubectl get pods --all-namespaces
+          
+          # Check if all nodes are ready
+          NOT_READY=$(kubectl get nodes --no-headers | grep -v Ready | wc -l)
+          if [ $NOT_READY -eq 0 ]; then
+            echo "✅ All nodes are Ready!"
+          else
+            echo "⚠️ Some nodes are not Ready"
+            kubectl get nodes
+          fi

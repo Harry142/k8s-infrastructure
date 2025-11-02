@@ -4,8 +4,28 @@ steps:
   inputs:
     targetType: 'inline'
     script: |
-      # Install ansible if not present
-      sudo apt update && sudo apt install -y ansible
+      # Fix repository issues and install ansible
+      echo "🔧 Fixing repository issues..."
+      
+      # Remove problematic repositories
+      sudo rm -f /etc/apt/sources.list.d/hashicorp.list
+      sudo rm -f /etc/apt/sources.list.d/mikhailnov-ubuntu-pulseeffects-jammy.list
+      
+      # Update package list (ignore warnings)
+      sudo apt update 2>/dev/null || true
+      
+      # Install ansible
+      echo "📦 Installing Ansible..."
+      sudo apt install -y ansible
+      
+      # Verify ansible installation
+      if ! command -v ansible-playbook &> /dev/null; then
+        echo "❌ Ansible installation failed, trying alternative method..."
+        sudo apt install -y python3-pip
+        pip3 install ansible
+        export PATH="$HOME/.local/bin:$PATH"
+      fi
       
       # Run ansible playbook with dynamic inventory
+      echo "🚀 Running Ansible playbook..."
       ansible-playbook -i ansible/inventory.ini ansible/playbook.yml
