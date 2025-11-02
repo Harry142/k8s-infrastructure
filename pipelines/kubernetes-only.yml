@@ -13,6 +13,8 @@ parameters:
   - setup
   - reset
   - rejoin-workers
+  - status
+  - restart-services
 
 stages:
 - stage: KubernetesAction
@@ -63,6 +65,19 @@ stages:
               multipass exec k8s-worker1 -- sudo $JOIN_CMD
               multipass exec k8s-worker2 -- sudo $JOIN_CMD
               echo "✅ Workers rejoined"
+              ;;
+            "status")
+              echo "📊 Kubernetes Cluster Status..."
+              kubectl get nodes -o wide
+              kubectl get pods --all-namespaces
+              kubectl get svc --all-namespaces
+              ;;
+            "restart-services")
+              echo "🔄 Restarting Kubernetes services..."
+              multipass exec k8s-master -- sudo systemctl restart kubelet containerd
+              multipass exec k8s-worker1 -- sudo systemctl restart kubelet containerd
+              multipass exec k8s-worker2 -- sudo systemctl restart kubelet containerd
+              echo "✅ Services restarted"
               ;;
           esac
     
