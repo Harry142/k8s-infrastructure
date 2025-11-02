@@ -1,0 +1,26 @@
+trigger:
+- main
+
+pool:
+  name: 'Self-Hosted'  # Your on-prem agent
+
+stages:
+- stage: Infrastructure
+  jobs:
+  - job: CreateVMs
+    steps:
+    - task: Bash@3
+      displayName: 'Create Multipass VMs'
+      inputs:
+        targetType: 'filePath'
+        filePath: 'scripts/create-vms.sh'
+
+- stage: Kubernetes
+  jobs:
+  - job: SetupK8s
+    steps:
+    - task: Bash@3
+      displayName: 'Setup Kubernetes'
+      inputs:
+        targetType: 'filePath'
+        filePath: 'scripts/setup-k8s-v2.sh'

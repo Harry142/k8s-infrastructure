@@ -1,0 +1,21 @@
+# This file contains the Calico network plugin configuration
+# It will be applied automatically during cluster setup
+# Source: https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/calico.yaml
+
+# Note: The actual Calico manifest is quite large (3000+ lines)
+# For this IaC setup, we reference it directly from the official source
+# in our Ansible playbook to ensure we always get the latest stable version
+
+# If you need a local copy, download it with:
+# curl -O https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/calico.yaml
+
+# Key Calico components that will be installed:
+# - calico-kube-controllers (Deployment)
+# - calico-node (DaemonSet) 
+# - calico-typha (Deployment)
+# - Various ConfigMaps, ServiceAccounts, and RBAC resources
+
+# Network configuration:
+# - Pod CIDR: 192.168.0.0/16
+# - BGP: Enabled for cross-node routing
+# - IPIP: Enabled for overlay networking
