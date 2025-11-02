@@ -115,6 +115,11 @@
     - name: Install Calico network plugin
       shell: kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/calico.yaml
       become_user: ubuntu
+      
+    - name: Wait for Calico pods to be ready
+      shell: kubectl wait --for=condition=Ready pods --all -n calico-system --timeout=300s
+      become_user: ubuntu
+      ignore_errors: yes
 
     - name: Get join command
       shell: kubeadm token create --print-join-command

@@ -15,6 +15,7 @@ parameters:
   - rejoin-workers
   - status
   - restart-services
+  - install-calico
 
 stages:
 - stage: KubernetesAction
@@ -49,7 +50,22 @@ stages:
                 export PATH="$HOME/.local/bin:$PATH"
               }
               
+              # Run ansible playbook
               ansible-playbook -i ansible/inventory.ini ansible/playbook.yml
+              
+              # Ensure Calico is installed (backup check)
+              echo "🔍 Verifying Calico installation..."
+              mkdir -p ~/.kube
+              multipass exec k8s-master -- sudo cat /etc/kubernetes/admin.conf > ~/.kube/config
+              
+              if ! kubectl get pods -n calico-system &>/dev/null; then
+                echo "⚠️ Calico not found, installing manually..."
+                kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/calico.yaml
+                echo "Waiting for Calico..."
+                sleep 60
+              fi
+              
+              echo "✅ Setup complete"
               ;;
             "reset")
               echo "🔄 Resetting Kubernetes cluster..."
@@ -64,6 +80,16 @@ stages:
               MASTER_IP=$(multipass info k8s-master | grep IPv4 | awk '{print $2}')
               multipass exec k8s-master -- sudo bash -c "kubeadm reset -f && rm -rf /var/lib/etcd && rm -rf /etc/kubernetes/pki"
               multipass exec k8s-master -- sudo kubeadm init --pod-network-cidr=192.168.0.0/16 --apiserver-advertise-address=$MASTER_IP
+              
+              # Setup kubectl on master
+              multipass exec k8s-master -- bash -c "mkdir -p /home/ubuntu/.kube && sudo cp /etc/kubernetes/admin.conf /home/ubuntu/.kube/config && sudo chown ubuntu:ubuntu /home/ubuntu/.kube/config"
+              
+              # Install Calico
+              multipass exec k8s-master -- kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/calico.yaml
+              
+              # Wait for Calico to be ready
+              echo "Waiting for Calico to be ready..."
+              sleep 60
               
               # Get new join command
               JOIN_CMD=$(multipass exec k8s-master -- sudo kubeadm token create --print-join-command)
@@ -94,6 +120,23 @@ stages:
               multipass exec k8s-worker1 -- sudo systemctl restart kubelet containerd
               multipass exec k8s-worker2 -- sudo systemctl restart kubelet containerd
               echo "✅ Services restarted"
+              ;;
+            "install-calico")
+              echo "🌐 Installing Calico network plugin..."
+              
+              # Setup kubectl
+              mkdir -p ~/.kube
+              multipass exec k8s-master -- sudo cat /etc/kubernetes/admin.conf > ~/.kube/config
+              
+              # Install Calico
+              kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/calico.yaml
+              
+              echo "Waiting for Calico pods..."
+              kubectl wait --for=condition=Ready pods --all -n calico-system --timeout=300s || echo "Calico taking longer than expected"
+              
+              echo "✅ Calico installation complete"
+              kubectl get pods -n calico-system
+              kubectl get pods -n kube-system | grep coredns
               ;;
           esac
     

@@ -1,0 +1,24 @@
+steps:
+- task: Bash@3
+  displayName: 'Install Calico Network Plugin'
+  inputs:
+    targetType: 'inline'
+    script: |
+      echo "🌐 Installing Calico network plugin..."
+      
+      # Setup kubectl if not already done
+      mkdir -p ~/.kube
+      multipass exec k8s-master -- sudo cat /etc/kubernetes/admin.conf > ~/.kube/config 2>/dev/null || true
+      
+      # Install Calico
+      kubectl apply -f https://raw.githubusercontent.com/projectcalico/calico/v3.26.1/manifests/calico.yaml
+      
+      echo "⏳ Waiting for Calico pods to be ready..."
+      kubectl wait --for=condition=Ready pods --all -n calico-system --timeout=300s || echo "Calico pods taking longer than expected"
+      
+      echo "✅ Calico installation complete"
+      
+      # Show network status
+      echo "📊 Network Plugin Status:"
+      kubectl get pods -n calico-system
+      kubectl get pods -n kube-system | grep coredns
