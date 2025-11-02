@@ -1,0 +1,11 @@
+steps:
+- task: Bash@3
+  displayName: 'Setup Kubernetes with Ansible'
+  inputs:
+    targetType: 'inline'
+    script: |
+      # Install ansible if not present
+      sudo apt update && sudo apt install -y ansible
+      
+      # Run ansible playbook with dynamic inventory
+      ansible-playbook -i ansible/inventory.ini ansible/playbook.yml

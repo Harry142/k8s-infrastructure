@@ -1,0 +1,6 @@
+steps:
+- task: Bash@3
+  displayName: 'Create Multipass VMs'
+  inputs:
+    targetType: 'filePath'
+    filePath: 'scripts/create-vms.sh'

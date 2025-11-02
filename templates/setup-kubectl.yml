@@ -1,0 +1,11 @@
+steps:
+- task: Bash@3
+  displayName: 'Setup kubectl'
+  inputs:
+    targetType: 'inline'
+    script: |
+      # Copy kubeconfig from master
+      multipass exec k8s-master -- sudo cat /etc/kubernetes/admin.conf > ~/.kube/config
+      
+      # Verify connection
+      kubectl get nodes

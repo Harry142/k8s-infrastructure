@@ -1,0 +1,32 @@
+steps:
+- task: Bash@3
+  displayName: 'Deploy Database'
+  inputs:
+    targetType: 'inline'
+    script: |
+      kubectl apply -f k8s/database.yaml
+      kubectl rollout status deployment/postgres-db --timeout=300s
+
+- task: Bash@3
+  displayName: 'Deploy Backend API'
+  inputs:
+    targetType: 'inline'
+    script: |
+      kubectl apply -f k8s/backend.yaml
+      kubectl rollout status deployment/backend-api --timeout=300s
+
+- task: Bash@3
+  displayName: 'Deploy Frontend'
+  inputs:
+    targetType: 'inline'
+    script: |
+      kubectl apply -f k8s/frontend.yaml
+      kubectl rollout status deployment/frontend-web --timeout=300s
+
+- task: Bash@3
+  displayName: 'Deploy Nginx'
+  inputs:
+    targetType: 'inline'
+    script: |
+      kubectl apply -f k8s/nginx.yaml
+      kubectl rollout status deployment/nginx --timeout=300s

@@ -1,0 +1,24 @@
+name: Infrastructure Setup
+trigger: none  # Manual only
+
+pool:
+  name: 'Default'
+
+stages:
+- stage: CreateVMs
+  displayName: 'Create Virtual Machines'
+  jobs:
+  - job: CreateVMs
+    displayName: 'Create Multipass VMs'
+    steps:
+    - template: ../templates/create-vms.yml
+
+- stage: SetupKubernetes
+  displayName: 'Setup Kubernetes Cluster'
+  dependsOn: CreateVMs
+  jobs:
+  - job: SetupK8s
+    displayName: 'Configure Kubernetes'
+    steps:
+    - template: ../templates/generate-inventory.yml
+    - template: ../templates/setup-kubernetes.yml

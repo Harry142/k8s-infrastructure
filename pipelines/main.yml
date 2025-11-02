@@ -1,0 +1,7 @@
+# Main pipeline selector
+name: Main Pipeline
+trigger:
+- main
+
+extends:
+  template: applications.yml  # Default to app deployment

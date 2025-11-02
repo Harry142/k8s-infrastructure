@@ -1,0 +1,27 @@
+steps:
+- task: Bash@3
+  displayName: 'Show Deployment Status'
+  inputs:
+    targetType: 'inline'
+    script: |
+      echo "🚀 Application Status:"
+      kubectl get nodes -o wide
+      kubectl get pods -o wide
+      kubectl get svc
+      
+      # Get service URLs
+      echo ""
+      echo "🌐 Service URLs:"
+      
+      # Get nginx service
+      NGINX_PORT=$(kubectl get svc nginx-service -o jsonpath='{.spec.ports[0].nodePort}' 2>/dev/null || echo "N/A")
+      FRONTEND_PORT=$(kubectl get svc frontend-service -o jsonpath='{.spec.ports[0].nodePort}' 2>/dev/null || echo "N/A")
+      MASTER_IP=$(multipass info k8s-master | grep IPv4 | awk '{print $2}')
+      
+      if [ "$NGINX_PORT" != "N/A" ]; then
+        echo "Nginx: http://$MASTER_IP:$NGINX_PORT"
+      fi
+      
+      if [ "$FRONTEND_PORT" != "N/A" ]; then
+        echo "Frontend: http://$MASTER_IP:$FRONTEND_PORT"
+      fi

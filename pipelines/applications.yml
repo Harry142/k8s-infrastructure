@@ -1,0 +1,17 @@
+name: Deploy Applications
+trigger:
+- main
+
+pool:
+  name: 'Default'
+
+stages:
+- stage: DeployApps
+  displayName: 'Deploy Full Stack Application'
+  jobs:
+  - job: Deploy
+    displayName: 'Deploy Applications'
+    steps:
+    - template: ../templates/setup-kubectl.yml
+    - template: ../templates/deploy-apps.yml
+    - template: ../templates/show-status.yml

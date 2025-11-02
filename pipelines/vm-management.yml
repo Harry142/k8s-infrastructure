@@ -1,0 +1,27 @@
+name: VM Management
+trigger: none
+
+pool:
+  name: 'Default'
+
+parameters:
+- name: action
+  displayName: 'VM Action'
+  type: string
+  default: 'create'
+  values:
+  - create
+  - destroy
+  - restart
+  - status
+
+stages:
+- stage: ManageVMs
+  displayName: 'VM Management'
+  jobs:
+  - job: VMAction
+    displayName: 'VM ${{ parameters.action }}'
+    steps:
+    - template: ../templates/vm-actions.yml
+      parameters:
+        action: ${{ parameters.action }}

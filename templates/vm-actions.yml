@@ -1,0 +1,41 @@
+parameters:
+- name: action
+  type: string
+
+steps:
+- task: Bash@3
+  displayName: 'VM Action: ${{ parameters.action }}'
+  inputs:
+    targetType: 'inline'
+    script: |
+      case "${{ parameters.action }}" in
+        "create")
+          echo "🚀 Creating VMs..."
+          ./scripts/create-vms.sh
+          ;;
+        "destroy")
+          echo "🗑️ Destroying VMs..."
+          multipass delete --all --purge
+          echo "✅ All VMs destroyed"
+          ;;
+        "restart")
+          echo "🔄 Restarting VMs..."
+          multipass restart --all
+          echo "✅ All VMs restarted"
+          ;;
+        "status")
+          echo "📊 VM Status:"
+          multipass list
+          echo ""
+          echo "💾 Host Resources:"
+          free -h
+          ;;
+        *)
+          echo "❌ Unknown action: ${{ parameters.action }}"
+          exit 1
+          ;;
+      esac
+      
+      echo ""
+      echo "Current VM Status:"
+      multipass list
